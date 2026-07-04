@@ -86,6 +86,7 @@ const startAmmoBatch = () => apiCall('start_ammo_batch')
 const stopAmmoBatch = () => apiCall('stop_ammo_batch')
 
 const addImage = () => apiCall('add_image')
+const autoAddImages = () => apiCall('auto_add_images')
 const removeImage = () => {
   if (selectedImage.value >= 0) {
     apiCall('remove_image', selectedImage.value)
@@ -245,8 +246,11 @@ const exitProgram = () => apiCall('exit_program')
             </select>
             
             <div class="grid-2col gap-sm">
-              <button class="button-secondary-pill" @click="addImage">添加新模板</button>
-              <button class="button-dark-utility" @click="removeImage">删除选中项</button>
+              <button class="button-primary" @click="autoAddImages">自动加载 Graph 图库</button>
+              <button class="button-secondary-pill" @click="addImage">手动添加单张</button>
+            </div>
+            <div class="mt-sm">
+              <button class="button-dark-utility w-full" @click="removeImage">删除选中项</button>
             </div>
           </section>
         </div>

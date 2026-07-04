@@ -4,7 +4,11 @@
     "trigger_key": "v",
     "scan_region": null,
     "icon_files": [
-        "D:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\\u53c91.png"
+        "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\\u53c91.png",
+        "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\\u641c\u7d221.png",
+        "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\\u641c\u7d222.png",
+        "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\\u641c\u7d223.png",
+        "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\\u641c\u7d224.png"
     ],
     "ammo_box_start": null,
     "ammo_col_gap": 0,

@@ -331,6 +331,21 @@ class Api:
                 cfg.save_config()
                 cfg.templates_need_update = True
 
+    def auto_add_images(self):
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        graph_dir = os.path.join(base_path, "Graph")
+        if os.path.exists(graph_dir) and os.path.isdir(graph_dir):
+            added = False
+            for filename in os.listdir(graph_dir):
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                    filepath = os.path.join(graph_dir, filename)
+                    if filepath not in cfg.ICON_FILES:
+                        cfg.ICON_FILES.append(filepath)
+                        added = True
+            if added:
+                cfg.save_config()
+                cfg.templates_need_update = True
+
     def remove_image(self, index):
         if 0 <= index < len(cfg.ICON_FILES):
             cfg.ICON_FILES.pop(index)
@@ -450,7 +465,7 @@ if __name__ == '__main__':
     
     window.expose(api.get_state, api.update_cfg, api.start_record_key, api.start_area, api.reset_area,
                   api.toggle_ammo_pos_setting, api.save_ammo_count, api.start_ammo_batch, api.stop_ammo_batch,
-                  api.add_image, api.remove_image, api.restore_all, api.exit_program)
+                  api.add_image, api.auto_add_images, api.remove_image, api.restore_all, api.exit_program)
     
     # 使用 Edge Chromium 渲染，并在窗口准备好后启动后台线程
     webview.start(on_startup, window, gui='edgechromium', debug=True)
