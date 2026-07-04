@@ -346,9 +346,20 @@ class Api:
                 cfg.save_config()
                 cfg.templates_need_update = True
 
-    def remove_image(self, index):
-        if 0 <= index < len(cfg.ICON_FILES):
-            cfg.ICON_FILES.pop(index)
+    def remove_images(self, indices):
+        changed = False
+        # 从大到小删除以避免索引越界
+        for index in sorted(indices, reverse=True):
+            if 0 <= index < len(cfg.ICON_FILES):
+                cfg.ICON_FILES.pop(index)
+                changed = True
+        if changed:
+            cfg.save_config()
+            cfg.templates_need_update = True
+            
+    def remove_all_images(self):
+        if cfg.ICON_FILES:
+            cfg.ICON_FILES.clear()
             cfg.save_config()
             cfg.templates_need_update = True
 
@@ -465,7 +476,7 @@ if __name__ == '__main__':
     
     window.expose(api.get_state, api.update_cfg, api.start_record_key, api.start_area, api.reset_area,
                   api.toggle_ammo_pos_setting, api.save_ammo_count, api.start_ammo_batch, api.stop_ammo_batch,
-                  api.add_image, api.auto_add_images, api.remove_image, api.restore_all, api.exit_program)
+                  api.add_image, api.auto_add_images, api.remove_images, api.remove_all_images, api.restore_all, api.exit_program)
     
     # 使用 Edge Chromium 渲染，并在窗口准备好后启动后台线程
     webview.start(on_startup, window, gui='edgechromium', debug=True)

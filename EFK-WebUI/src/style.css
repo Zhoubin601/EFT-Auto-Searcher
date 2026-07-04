@@ -247,3 +247,30 @@ button:focus-visible {
   justify-content: space-between;
   align-items: center;
 }
+
+/* 图像管理列表 */
+.image-list-container {
+  height: 180px;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 11px;
+  background-color: var(--canvas-parchment);
+  border: 1px solid var(--hairline);
+}
+.image-list-item {
+  padding: 8px 12px;
+  border-radius: var(--rounded-sm);
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  transition: background-color 0.1s ease;
+  word-break: break-all;
+}
+.image-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.image-list-item.selected {
+  background-color: rgba(0, 102, 204, 0.1);
+  color: var(--primary);
+  font-weight: 600;
+}
