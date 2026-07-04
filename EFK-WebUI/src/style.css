@@ -1,0 +1,249 @@
+:root {
+  --primary: #0066cc;
+  --primary-focus: #0071e3;
+  --ink: #1d1d1f;
+  --ink-muted-80: #333333;
+  --ink-muted-48: #7a7a7a;
+  --divider-soft: #f0f0f0;
+  --hairline: #e0e0e0;
+  --canvas: #ffffff;
+  --canvas-parchment: #f5f5f7;
+  --surface-pearl: #fafafc;
+  --on-primary: #ffffff;
+
+  --rounded-sm: 8px;
+  --rounded-md: 11px;
+  --rounded-lg: 18px;
+  --rounded-pill: 9999px;
+
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 17px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* 拖拽标题栏 */
+.titlebar {
+  height: 44px;
+  background-color: var(--surface-pearl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 100;
+  border-bottom: 1px solid var(--hairline);
+}
+.titlebar-title {
+  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+/* 布局系统 */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 44px);
+}
+.sidebar {
+  width: 140px;
+  background-color: var(--canvas-parchment);
+  border-right: 1px solid var(--hairline);
+  padding: var(--space-md) var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.main-content {
+  flex: 1;
+  background-color: var(--canvas);
+  overflow-y: auto;
+  padding: var(--space-xl);
+}
+.content-wrapper {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* 侧边栏导航项 */
+.nav-item {
+  padding: 8px 16px;
+  border-radius: var(--rounded-md);
+  color: var(--ink-muted-80);
+  font-weight: 400;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+.nav-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+.nav-item.active {
+  background-color: rgba(0, 102, 204, 0.1);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Typography */
+.display-md {
+  font-family: "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.47;
+  letter-spacing: -0.374px;
+}
+.body-strong {
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.374px;
+}
+.body {
+  font-size: 17px;
+  font-weight: 400;
+}
+.caption {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  letter-spacing: -0.224px;
+}
+.caption-strong {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.29;
+  letter-spacing: -0.224px;
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-primary { color: var(--primary); }
+.text-red { color: #ff3b30; }
+.text-green { color: #34c759; }
+.muted { color: var(--ink-muted-48); }
+.mt-xs { margin-top: var(--space-xs); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mt-xl { margin-top: var(--space-xl); }
+.mb-xs { margin-bottom: var(--space-xs); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.mb-xl { margin-bottom: var(--space-xl); }
+.pb-xl { padding-bottom: var(--space-xl); }
+.w-full { width: 100%; box-sizing: border-box; }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.gap-sm { gap: var(--space-sm); }
+.align-center { align-items: center; }
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+@media (max-width: 500px) {
+  .grid-2col { grid-template-columns: 1fr; }
+}
+
+/* Cards - 移除多余的边框，主要依靠留白 */
+.store-utility-card {
+  background-color: var(--canvas);
+  color: var(--ink);
+  /* border: 1px solid var(--hairline); Apple design: cards sometimes have hairlines, but we want flat sections here */
+}
+
+/* Buttons */
+button {
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.1s ease;
+  font-family: inherit;
+}
+button:active {
+  transform: scale(0.95);
+}
+button:focus-visible {
+  outline: 2px solid var(--primary-focus);
+  outline-offset: 2px;
+}
+
+.button-primary {
+  background-color: var(--primary);
+  color: var(--on-primary);
+  font-size: 17px;
+  font-weight: 400;
+  border-radius: var(--rounded-pill);
+  padding: 11px 22px;
+}
+.button-secondary-pill {
+  background-color: var(--canvas);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  font-size: 17px;
+  font-weight: 400;
+  border-radius: var(--rounded-pill);
+  padding: 11px 22px;
+}
+.button-dark-utility {
+  background-color: var(--ink);
+  color: var(--on-primary);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.224px;
+  border-radius: var(--rounded-sm);
+  padding: 8px 15px;
+}
+.button-pearl-capsule {
+  background-color: var(--surface-pearl);
+  color: var(--ink-muted-80);
+  font-size: 14px;
+  font-weight: 400;
+  border: 3px solid var(--divider-soft);
+  border-radius: var(--rounded-md);
+  padding: 8px 14px;
+}
+
+/* Inputs */
+.search-input {
+  background-color: var(--canvas-parchment);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  font-size: 17px;
+  font-family: inherit;
+  border-radius: var(--rounded-pill);
+  padding: 8px 16px;
+  outline: none;
+}
+.search-input:focus {
+  border-color: var(--primary-focus);
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
