@@ -11,6 +11,7 @@ const props = defineProps({
 
 const flows = ref([])
 const editingFlow = ref(null)
+const activeStepIndex = ref(null)
 
 const loadFlows = async () => {
   const result = await props.apiCall('get_flows')
@@ -36,10 +37,10 @@ const createNewFlow = () => {
     enabled: false,
     steps: []
   }
+  activeStepIndex.value = null
 }
 
 const editFlow = (flow) => {
-  // 注入唯一 ID 用于拖拽
   const f = JSON.parse(JSON.stringify(flow))
   if (f.steps) {
     f.steps.forEach(s => {
@@ -49,16 +50,17 @@ const editFlow = (flow) => {
     f.steps = []
   }
   editingFlow.value = f
+  activeStepIndex.value = null
 }
 
 const saveFlow = async () => {
-  // 去除内部使用的 _id
   const f = JSON.parse(JSON.stringify(editingFlow.value))
   f.steps.forEach(s => {
     delete s._id
   })
   await props.apiCall('save_flow', f)
   editingFlow.value = null
+  activeStepIndex.value = null
   loadFlows()
 }
 
@@ -77,10 +79,14 @@ const toggleFlow = async (flow) => {
 }
 
 const removeStep = (index) => {
+  if (activeStepIndex.value === index) {
+    activeStepIndex.value = null
+  } else if (activeStepIndex.value !== null && activeStepIndex.value > index) {
+    activeStepIndex.value -= 1
+  }
   editingFlow.value.steps.splice(index, 1)
 }
 
-// 底部可用组件库
 const availableComponents = ref([
   { action: 'sleep', name: '延时' },
   { action: 'mouse_move', name: '鼠标移动' },
@@ -89,7 +95,6 @@ const availableComponents = ref([
   { action: 'image_search', name: '识图' }
 ])
 
-// 拖拽克隆生成实际的数据节点
 const cloneComponent = (cmp) => {
   let step = { action: cmp.action, _id: Date.now() + Math.random() }
   if (cmp.action === 'sleep') step.duration = 1000
@@ -98,6 +103,11 @@ const cloneComponent = (cmp) => {
   if (cmp.action === 'key_press') { step.key = 'esc'; }
   if (cmp.action === 'image_search') { step.target = ''; step.confidence = 0.8; }
   return step
+}
+
+const getStepName = (action) => {
+  const cmp = availableComponents.value.find(c => c.action === action)
+  return cmp ? cmp.name : action
 }
 </script>
 
@@ -131,7 +141,7 @@ const cloneComponent = (cmp) => {
       </div>
     </div>
 
-    <!-- 编辑视图 (拖拽上下分栏) -->
+    <!-- 编辑视图 -->
     <div v-else>
       <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <h2 class="display-md">编辑任务</h2>
@@ -148,77 +158,34 @@ const cloneComponent = (cmp) => {
         </div>
       </section>
 
-      <!-- 上方：流程画布 -->
+      <!-- 上方：横向流程画布 -->
       <section class="store-utility-card mb-md">
-        <h3 class="body-strong mb-md">流程画布 <span class="caption muted font-normal ml-sm">(可拖拽排序)</span></h3>
+        <h3 class="body-strong mb-md">流程画布 <span class="caption muted font-normal ml-sm">(点击小方块编辑参数)</span></h3>
         
-        <draggable
-          v-model="editingFlow.steps"
-          group="flow"
-          item-key="_id"
-          animation="200"
-          style="min-height: 100px; border: 2px dashed var(--hairline); padding: 12px; border-radius: 12px;"
-        >
-          <template #item="{ element: step, index }">
-            <div class="mb-sm cursor-move" style="background: var(--canvas-parchment); border-radius: 8px; padding: 12px; border: 1px solid var(--hairline);">
-              <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div class="caption-strong text-primary flex align-center gap-xs">
-                  <span style="font-size: 16px;">≡</span> 步骤 {{ index + 1 }}: {{ step.action }}
+        <div style="background: var(--canvas-parchment); border-radius: 12px; border: 2px dashed var(--hairline); padding: 20px; overflow-x: auto;">
+          <draggable
+            v-model="editingFlow.steps"
+            group="flow"
+            item-key="_id"
+            animation="200"
+            class="horizontal-flow"
+          >
+            <template #item="{ element: step, index }">
+              <div class="flow-step-item">
+                <div class="flow-step-box" :class="{ 'active': activeStepIndex === index }" @click="activeStepIndex = index">
+                  <div class="step-delete" @click.stop="removeStep(index)">×</div>
+                  <div class="caption-strong text-primary">{{ getStepName(step.action) }}</div>
                 </div>
-                <button class="button-pearl-capsule" style="padding: 4px 8px;" @click="removeStep(index)">删除</button>
               </div>
-
-              <!-- 延时 -->
-              <div v-if="step.action === 'sleep'" class="flex gap-sm align-center">
-                <span class="caption">延时(毫秒):</span>
-                <input type="number" v-model="step.duration" class="search-input" style="height: 32px; width: 100px;">
+            </template>
+            <!-- 空状态占位 -->
+            <template #header v-if="editingFlow.steps.length === 0">
+              <div class="text-center caption muted" style="line-height: 80px; width: 100%;">
+                拖拽下方组件到这里
               </div>
-
-              <!-- 鼠标移动 -->
-              <div v-if="step.action === 'mouse_move'" class="flex gap-sm align-center">
-                <span class="caption">X:</span>
-                <input type="number" v-model="step.x" class="search-input" style="height: 32px; width: 80px;">
-                <span class="caption">Y:</span>
-                <input type="number" v-model="step.y" class="search-input" style="height: 32px; width: 80px;">
-              </div>
-
-              <!-- 鼠标点击 -->
-              <div v-if="step.action === 'mouse_click'" class="flex gap-sm align-center">
-                <span class="caption">按键:</span>
-                <select v-model="step.button" class="search-input" style="height: 32px; width: 100px;">
-                  <option value="left">左键</option>
-                  <option value="right">右键</option>
-                </select>
-                <span class="caption">修饰键:</span>
-                <select v-model="step.modifier" class="search-input" style="height: 32px; width: 100px;">
-                  <option value="none">无</option>
-                  <option value="ctrl">Ctrl</option>
-                  <option value="shift">Shift</option>
-                </select>
-              </div>
-
-              <!-- 键盘按键 -->
-              <div v-if="step.action === 'key_press'" class="flex gap-sm align-center">
-                <span class="caption">按键名(如 esc, a):</span>
-                <input type="text" v-model="step.key" class="search-input" style="height: 32px; width: 100px;">
-              </div>
-
-              <!-- 识图 -->
-              <div v-if="step.action === 'image_search'" class="flex gap-sm align-center" style="flex-wrap: wrap;">
-                <span class="caption">图片路径:</span>
-                <input type="text" v-model="step.target" class="search-input w-full" style="height: 32px; margin-bottom: 8px;">
-                <span class="caption">相似度:</span>
-                <input type="number" step="0.1" v-model="step.confidence" class="search-input" style="height: 32px; width: 80px;">
-              </div>
-            </div>
-          </template>
-          <!-- 空状态占位 -->
-          <template #header v-if="editingFlow.steps.length === 0">
-            <div class="text-center caption muted" style="line-height: 80px;">
-              拖拽下方组件到这里
-            </div>
-          </template>
-        </draggable>
+            </template>
+          </draggable>
+        </div>
       </section>
 
       <!-- 下方：可用组件库 -->
@@ -241,6 +208,75 @@ const cloneComponent = (cmp) => {
         </draggable>
       </section>
     </div>
+
+    <!-- 浮层弹窗：编辑参数 -->
+    <Teleport to="body">
+      <div v-if="activeStepIndex !== null && editingFlow && editingFlow.steps[activeStepIndex]" class="modal-overlay" @click.self="activeStepIndex = null">
+        <div class="modal-content">
+          <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 class="body-strong">配置: {{ getStepName(editingFlow.steps[activeStepIndex].action) }}</h3>
+            <button class="button-pearl-capsule" style="padding: 4px 10px; border-radius: 99px;" @click="activeStepIndex = null">完成</button>
+          </div>
+          
+          <div class="params-form">
+            <!-- 延时 -->
+            <div v-if="editingFlow.steps[activeStepIndex].action === 'sleep'" class="flex gap-sm align-center">
+              <span class="caption">延时(毫秒):</span>
+              <input type="number" v-model="editingFlow.steps[activeStepIndex].duration" class="search-input" style="height: 32px; width: 120px;">
+            </div>
+
+            <!-- 鼠标移动 -->
+            <div v-if="editingFlow.steps[activeStepIndex].action === 'mouse_move'" class="grid-1col gap-sm">
+              <div class="flex gap-sm align-center">
+                <span class="caption">X 坐标:</span>
+                <input type="number" v-model="editingFlow.steps[activeStepIndex].x" class="search-input w-full" style="height: 32px;">
+              </div>
+              <div class="flex gap-sm align-center">
+                <span class="caption">Y 坐标:</span>
+                <input type="number" v-model="editingFlow.steps[activeStepIndex].y" class="search-input w-full" style="height: 32px;">
+              </div>
+            </div>
+
+            <!-- 鼠标点击 -->
+            <div v-if="editingFlow.steps[activeStepIndex].action === 'mouse_click'" class="grid-1col gap-sm">
+              <div class="flex gap-sm align-center">
+                <span class="caption">按键:</span>
+                <select v-model="editingFlow.steps[activeStepIndex].button" class="search-input w-full" style="height: 32px;">
+                  <option value="left">左键</option>
+                  <option value="right">右键</option>
+                </select>
+              </div>
+              <div class="flex gap-sm align-center">
+                <span class="caption">修饰键:</span>
+                <select v-model="editingFlow.steps[activeStepIndex].modifier" class="search-input w-full" style="height: 32px;">
+                  <option value="none">无</option>
+                  <option value="ctrl">Ctrl</option>
+                  <option value="shift">Shift</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 键盘按键 -->
+            <div v-if="editingFlow.steps[activeStepIndex].action === 'key_press'" class="flex gap-sm align-center">
+              <span class="caption">按键名:</span>
+              <input type="text" v-model="editingFlow.steps[activeStepIndex].key" class="search-input" style="height: 32px; width: 120px;" placeholder="如 esc, enter">
+            </div>
+
+            <!-- 识图 -->
+            <div v-if="editingFlow.steps[activeStepIndex].action === 'image_search'" class="grid-1col gap-sm">
+              <div>
+                <div class="caption mb-xs">图片路径:</div>
+                <input type="text" v-model="editingFlow.steps[activeStepIndex].target" class="search-input w-full" style="height: 32px;">
+              </div>
+              <div class="flex gap-sm align-center mt-xs">
+                <span class="caption">相似度(0-1):</span>
+                <input type="number" step="0.1" v-model="editingFlow.steps[activeStepIndex].confidence" class="search-input" style="height: 32px; width: 80px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -250,5 +286,100 @@ const cloneComponent = (cmp) => {
 }
 .cursor-move:active {
   cursor: grabbing;
+}
+
+/* 横向流程图样式 */
+.horizontal-flow {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-height: 80px;
+}
+.flow-step-item {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.flow-step-item::after {
+  content: '→';
+  margin: 0 16px;
+  color: var(--ink-muted-48);
+  font-weight: 600;
+  font-size: 20px;
+}
+.horizontal-flow > *:last-child::after {
+  display: none;
+}
+
+.flow-step-box {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  background: var(--canvas);
+  border: 2px solid var(--hairline);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.flow-step-box:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+.flow-step-box.active {
+  border-color: var(--primary);
+  background: rgba(0, 102, 204, 0.05);
+}
+
+.step-delete {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #ff3b30;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.flow-step-box:hover .step-delete {
+  opacity: 1;
+}
+.step-delete:hover {
+  transform: scale(1.1);
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+}
+.modal-content {
+  background: var(--surface-pearl);
+  padding: 24px;
+  border-radius: 16px;
+  width: 320px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  border: 1px solid var(--hairline);
 }
 </style>
