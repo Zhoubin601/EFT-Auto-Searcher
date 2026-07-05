@@ -153,11 +153,19 @@ class ActionImageSearch(Action):
 
 class ActionCondition(Action):
     def __init__(self, step_data):
+        self.condition_action = None
+        cond_data = step_data.get("condition_action")
+        if cond_data:
+            self.condition_action = build_actions([cond_data])[0]
         self.if_cond = step_data.get("if", "last_search_success")
         self.then_steps = build_actions(step_data.get("then", []))
+        
     def execute(self, context, flow_state):
         if not flow_state['running']: return
-        # 目前只支持 boolean 检查
+        
+        if self.condition_action:
+            self.condition_action.execute(context, flow_state)
+            
         if context.get(self.if_cond, False):
             for action in self.then_steps:
                 if not flow_state['running']: break
@@ -166,12 +174,28 @@ class ActionCondition(Action):
 class ActionLoop(Action):
     def __init__(self, step_data):
         self.count = step_data.get("count", -1) # -1 为无限
+        self.break_on_success = step_data.get("break_on_success", True)
+        self.condition_action = None
+        cond_data = step_data.get("condition_action")
+        if cond_data:
+            self.condition_action = build_actions([cond_data])[0]
         self.children = build_actions(step_data.get("children", []))
+        
     def execute(self, context, flow_state):
         if not flow_state['running']: return
         c = 0
         while self.count == -1 or c < self.count:
             if not flow_state['running']: break
+            
+            if self.condition_action:
+                context['last_search_success'] = False
+                self.condition_action.execute(context, flow_state)
+                success = context.get('last_search_success', False)
+                if self.break_on_success and success:
+                    break
+                elif not self.break_on_success and not success:
+                    break
+                    
             for action in self.children:
                 if not flow_state['running']: break
                 action.execute(context, flow_state)

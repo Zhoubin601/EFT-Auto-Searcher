@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import draggable from 'vuedraggable'
+import NestedDraggable from './NestedDraggable.vue'
 
 const props = defineProps({
   apiCall: {
@@ -11,7 +12,7 @@ const props = defineProps({
 
 const flows = ref([])
 const editingFlow = ref(null)
-const activeStepIndex = ref(null)
+const activeStepId = ref(null)
 const autographLibs = ref([])
 
 const loadFlows = async () => {
@@ -40,30 +41,51 @@ const createNewFlow = () => {
     enabled: false,
     steps: []
   }
-  activeStepIndex.value = null
+  activeStepId.value = null
 }
 
 const editFlow = (flow) => {
   const f = JSON.parse(JSON.stringify(flow))
-  if (f.steps) {
-    f.steps.forEach(s => {
-      if (!s._id) s._id = Date.now() + Math.random()
+  const addIds = (arr) => {
+    if (!arr) return
+    arr.forEach(s => {
+      if (!s._id) s._id = Date.now() + Math.random().toString()
+      if (s.condition_action) {
+        s.condition_list = [s.condition_action]
+        delete s.condition_action
+      }
+      if (!s.condition_list) s.condition_list = []
+      if (!s.then) s.then = []
+      if (!s.children) s.children = []
+      addIds(s.condition_list)
+      addIds(s.then)
+      addIds(s.children)
     })
-  } else {
-    f.steps = []
   }
+  if (!f.steps) f.steps = []
+  addIds(f.steps)
   editingFlow.value = f
-  activeStepIndex.value = null
+  activeStepId.value = null
 }
 
 const saveFlow = async () => {
   const f = JSON.parse(JSON.stringify(editingFlow.value))
-  f.steps.forEach(s => {
+  const cleanStep = (s) => {
     delete s._id
-  })
+    if (s.condition_list && s.condition_list.length > 0) {
+      s.condition_action = cleanStep(s.condition_list[0])
+    }
+    delete s.condition_list
+    if (s.then) s.then.forEach(cleanStep)
+    if (s.children) s.children.forEach(cleanStep)
+    if (s.action !== 'condition') delete s.then
+    if (s.action !== 'loop') delete s.children
+    return s
+  }
+  if (f.steps) f.steps.forEach(cleanStep)
   await props.apiCall('save_flow', f)
   editingFlow.value = null
-  activeStepIndex.value = null
+  activeStepId.value = null
   loadFlows()
 }
 
@@ -81,30 +103,61 @@ const toggleFlow = async (flow) => {
   loadFlows()
 }
 
-const removeStep = (index) => {
-  if (activeStepIndex.value === index) {
-    activeStepIndex.value = null
-  } else if (activeStepIndex.value !== null && activeStepIndex.value > index) {
-    activeStepIndex.value -= 1
+const removeStep = (id) => {
+  if (activeStepId.value === id) activeStepId.value = null
+  const findAndRemove = (arr) => {
+    const idx = arr.findIndex(s => s._id === id)
+    if (idx !== -1) {
+      arr.splice(idx, 1)
+      return true
+    }
+    for (const s of arr) {
+      if (s.then && findAndRemove(s.then)) return true
+      if (s.children && findAndRemove(s.children)) return true
+      if (s.condition_list && findAndRemove(s.condition_list)) return true
+    }
+    return false
   }
-  editingFlow.value.steps.splice(index, 1)
+  if (editingFlow.value && editingFlow.value.steps) {
+    findAndRemove(editingFlow.value.steps)
+  }
 }
+
+const activeStepData = computed(() => {
+  if (!activeStepId.value || !editingFlow.value) return null
+  let found = null
+  const findStep = (arr) => {
+    for (const s of arr) {
+      if (s._id === activeStepId.value) { found = s; return }
+      if (s.then) findStep(s.then)
+      if (s.children) findStep(s.children)
+      if (s.condition_list) findStep(s.condition_list)
+      if (found) return
+    }
+  }
+  findStep(editingFlow.value.steps)
+  return found
+})
 
 const availableComponents = ref([
   { action: 'sleep', name: '延时' },
   { action: 'mouse_move', name: '鼠标移动' },
   { action: 'mouse_click', name: '鼠标点击' },
   { action: 'key_press', name: '键盘按键' },
-  { action: 'image_search', name: '识图' }
+  { action: 'image_search', name: '识图' },
+  { action: 'condition', name: '条件(If)' },
+  { action: 'loop', name: '循环(Loop)' }
 ])
 
 const cloneComponent = (cmp) => {
-  let step = { action: cmp.action, _id: Date.now() + Math.random() }
+  let step = { action: cmp.action, _id: Date.now() + Math.random().toString() }
   if (cmp.action === 'sleep') step.duration = 1000
   if (cmp.action === 'mouse_move') { step.x = 0; step.y = 0; }
   if (cmp.action === 'mouse_click') { step.button = 'left'; step.modifier = 'none'; }
   if (cmp.action === 'key_press') { step.key = 'esc'; }
   if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; }
+  if (cmp.action === 'condition') { step.if = 'last_search_success'; step.then = []; step.condition_list = []; }
+  if (cmp.action === 'loop') { step.count = -1; step.break_on_success = true; step.children = []; step.condition_list = []; }
   return step
 }
 
@@ -159,33 +212,18 @@ const getStepName = (action) => {
         </div>
       </section>
 
-      <!-- 上方：横向流程画布 -->
+      <!-- 上方：嵌套式横向流程画布 -->
       <section class="store-utility-card mb-md">
-        <h3 class="body-strong mb-md">流程画布 <span class="caption muted font-normal ml-sm">(点击小方块编辑参数)</span></h3>
+        <h3 class="body-strong mb-md">流程画布 <span class="caption muted font-normal ml-sm">(点击任意方块编辑参数)</span></h3>
         
         <div style="background: var(--canvas-parchment); border-radius: 12px; border: 2px dashed var(--hairline); padding: 20px; overflow-x: auto;">
-          <draggable
-            v-model="editingFlow.steps"
-            group="flow"
-            item-key="_id"
-            animation="200"
-            class="horizontal-flow"
-          >
-            <template #item="{ element: step, index }">
-              <div class="flow-step-item">
-                <div class="flow-step-box" :class="{ 'active': activeStepIndex === index }" @click="activeStepIndex = index">
-                  <div class="step-delete" @click.stop="removeStep(index)">×</div>
-                  <div class="caption-strong text-primary">{{ getStepName(step.action) }}</div>
-                </div>
-              </div>
-            </template>
-            <!-- 空状态占位 -->
-            <template #header v-if="editingFlow.steps.length === 0">
-              <div class="text-center caption muted" style="line-height: 80px; width: 100%;">
-                拖拽下方组件到这里
-              </div>
-            </template>
-          </draggable>
+          <NestedDraggable
+            :steps="editingFlow.steps"
+            :activeStepId="activeStepId"
+            :getStepName="getStepName"
+            @select-step="id => activeStepId = id"
+            @remove-step="removeStep"
+          />
         </div>
       </section>
 
@@ -212,44 +250,44 @@ const getStepName = (action) => {
 
     <!-- 浮层弹窗：编辑参数 -->
     <Teleport to="body">
-      <div v-if="activeStepIndex !== null && editingFlow && editingFlow.steps[activeStepIndex]" class="modal-overlay" @click.self="activeStepIndex = null">
+      <div v-if="activeStepData" class="modal-overlay" @click.self="activeStepId = null">
         <div class="modal-content">
           <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 class="body-strong">配置: {{ getStepName(editingFlow.steps[activeStepIndex].action) }}</h3>
-            <button class="button-pearl-capsule" style="padding: 4px 10px; border-radius: 99px;" @click="activeStepIndex = null">完成</button>
+            <h3 class="body-strong">配置: {{ getStepName(activeStepData.action) }}</h3>
+            <button class="button-pearl-capsule" style="padding: 4px 10px; border-radius: 99px;" @click="activeStepId = null">完成</button>
           </div>
           
           <div class="params-form">
             <!-- 延时 -->
-            <div v-if="editingFlow.steps[activeStepIndex].action === 'sleep'" class="flex gap-sm align-center">
+            <div v-if="activeStepData.action === 'sleep'" class="flex gap-sm align-center">
               <span class="caption">延时(毫秒):</span>
-              <input type="number" v-model="editingFlow.steps[activeStepIndex].duration" class="search-input" style="height: 32px; width: 120px;">
+              <input type="number" v-model="activeStepData.duration" class="search-input" style="height: 32px; width: 120px;">
             </div>
 
             <!-- 鼠标移动 -->
-            <div v-if="editingFlow.steps[activeStepIndex].action === 'mouse_move'" class="grid-1col gap-sm">
+            <div v-if="activeStepData.action === 'mouse_move'" class="grid-1col gap-sm">
               <div class="flex gap-sm align-center">
                 <span class="caption">X 坐标:</span>
-                <input type="number" v-model="editingFlow.steps[activeStepIndex].x" class="search-input w-full" style="height: 32px;">
+                <input type="number" v-model="activeStepData.x" class="search-input w-full" style="height: 32px;">
               </div>
               <div class="flex gap-sm align-center">
                 <span class="caption">Y 坐标:</span>
-                <input type="number" v-model="editingFlow.steps[activeStepIndex].y" class="search-input w-full" style="height: 32px;">
+                <input type="number" v-model="activeStepData.y" class="search-input w-full" style="height: 32px;">
               </div>
             </div>
 
             <!-- 鼠标点击 -->
-            <div v-if="editingFlow.steps[activeStepIndex].action === 'mouse_click'" class="grid-1col gap-sm">
+            <div v-if="activeStepData.action === 'mouse_click'" class="grid-1col gap-sm">
               <div class="flex gap-sm align-center">
                 <span class="caption">按键:</span>
-                <select v-model="editingFlow.steps[activeStepIndex].button" class="search-input w-full" style="height: 32px;">
+                <select v-model="activeStepData.button" class="search-input w-full" style="height: 32px;">
                   <option value="left">左键</option>
                   <option value="right">右键</option>
                 </select>
               </div>
               <div class="flex gap-sm align-center">
                 <span class="caption">修饰键:</span>
-                <select v-model="editingFlow.steps[activeStepIndex].modifier" class="search-input w-full" style="height: 32px;">
+                <select v-model="activeStepData.modifier" class="search-input w-full" style="height: 32px;">
                   <option value="none">无</option>
                   <option value="ctrl">Ctrl</option>
                   <option value="shift">Shift</option>
@@ -258,38 +296,65 @@ const getStepName = (action) => {
             </div>
 
             <!-- 键盘按键 -->
-            <div v-if="editingFlow.steps[activeStepIndex].action === 'key_press'" class="flex gap-sm align-center">
+            <div v-if="activeStepData.action === 'key_press'" class="flex gap-sm align-center">
               <span class="caption">按键名:</span>
-              <input type="text" v-model="editingFlow.steps[activeStepIndex].key" class="search-input" style="height: 32px; width: 120px;" placeholder="如 esc, enter">
+              <input type="text" v-model="activeStepData.key" class="search-input" style="height: 32px; width: 120px;" placeholder="如 esc, enter">
             </div>
 
             <!-- 识图 -->
-            <div v-if="editingFlow.steps[activeStepIndex].action === 'image_search'" class="grid-1col gap-sm">
+            <div v-if="activeStepData.action === 'image_search'" class="grid-1col gap-sm">
               <div class="flex gap-sm align-center">
                 <span class="caption">模式:</span>
-                <select v-model="editingFlow.steps[activeStepIndex].search_type" class="search-input flex-1" style="height: 32px;">
+                <select v-model="activeStepData.search_type" class="search-input flex-1" style="height: 32px;">
                   <option value="single">单张图片</option>
                   <option value="lib">自动化图库 (OR)</option>
                 </select>
               </div>
               
-              <div v-if="editingFlow.steps[activeStepIndex].search_type === 'lib'">
+              <div v-if="activeStepData.search_type === 'lib'">
                 <div class="caption mb-xs">选择图库:</div>
-                <select v-model="editingFlow.steps[activeStepIndex].target" class="search-input w-full" style="height: 32px;">
+                <select v-model="activeStepData.target" class="search-input w-full" style="height: 32px;">
                   <option disabled value="">请选择图库</option>
                   <option v-for="lib in autographLibs" :key="lib" :value="lib">{{ lib }}</option>
                 </select>
               </div>
               <div v-else>
                 <div class="caption mb-xs">图片路径:</div>
-                <input type="text" v-model="editingFlow.steps[activeStepIndex].target" class="search-input w-full" style="height: 32px;">
+                <input type="text" v-model="activeStepData.target" class="search-input w-full" style="height: 32px;">
               </div>
 
               <div class="flex gap-sm align-center mt-xs">
                 <span class="caption">相似度(0-1):</span>
-                <input type="number" step="0.1" v-model="editingFlow.steps[activeStepIndex].confidence" class="search-input" style="height: 32px; width: 80px;">
+                <input type="number" step="0.1" v-model="activeStepData.confidence" class="search-input" style="height: 32px; width: 80px;">
               </div>
             </div>
+
+            <!-- 循环 -->
+            <div v-if="activeStepData.action === 'loop'" class="grid-1col gap-sm">
+              <div class="flex gap-sm align-center">
+                <span class="caption">循环次数:</span>
+                <input type="number" v-model="activeStepData.count" class="search-input" style="height: 32px; width: 120px;">
+                <span class="caption muted">(-1为无限)</span>
+              </div>
+              <div class="flex gap-sm align-center mt-xs">
+                <span class="caption">条件插槽触发时:</span>
+                <select v-model="activeStepData.break_on_success" class="search-input flex-1" style="height: 32px;">
+                  <option :value="true">退出循环 (Break)</option>
+                  <option :value="false">继续循环</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- 条件 -->
+            <div v-if="activeStepData.action === 'condition'" class="grid-1col gap-sm">
+              <div class="flex gap-sm align-center">
+                <span class="caption">判定依据:</span>
+                <select v-model="activeStepData.if" class="search-input w-full" style="height: 32px;">
+                  <option value="last_search_success">上一次识图成功 (推荐通过条件插槽)</option>
+                </select>
+              </div>
+            </div>
+            
           </div>
         </div>
       </div>
