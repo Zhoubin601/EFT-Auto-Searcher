@@ -1,6 +1,6 @@
 {
-    "id": "flow_1783242059133",
-    "name": "自动购买7n1",
+    "id": "flow_1783244475504",
+    "name": "自动购买7n40",
     "enabled": false,
     "steps": [
         {
@@ -75,7 +75,7 @@
                 "confidence": 0.9,
                 "click_after_search": "right",
                 "selected_files": [
-                    "7n1.png"
+                    "7n40.png"
                 ]
             }
         },

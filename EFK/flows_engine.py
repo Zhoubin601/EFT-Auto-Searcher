@@ -71,15 +71,15 @@ class Action:
 
 class ActionSleep(Action):
     def __init__(self, step_data):
-        self.duration = step_data.get("duration", 1000)
+        self.duration = float(step_data.get("duration", 1000))
     def execute(self, context, flow_state):
         if not flow_state['running']: return
         time.sleep(self.duration / 1000.0)
 
 class ActionMouseMove(Action):
     def __init__(self, step_data):
-        self.x = step_data.get("x", 0)
-        self.y = step_data.get("y", 0)
+        self.x = int(step_data.get("x", 0))
+        self.y = int(step_data.get("y", 0))
     def execute(self, context, flow_state):
         if not flow_state['running']: return
         win32_mouse_move(self.x, self.y)
@@ -103,7 +103,7 @@ class ActionImageSearch(Action):
     def __init__(self, step_data):
         self.search_type = step_data.get("search_type", "single")
         self.target = step_data.get("target", "")
-        self.confidence = step_data.get("confidence", 0.8)
+        self.confidence = float(step_data.get("confidence", 0.8))
         self.click_after_search = step_data.get("click_after_search", "none")
         self.selected_files = step_data.get("selected_files", [])
         
@@ -183,7 +183,7 @@ class ActionCondition(Action):
 
 class ActionLoop(Action):
     def __init__(self, step_data):
-        self.count = step_data.get("count", -1) # -1 为无限
+        self.count = int(step_data.get("count", -1)) # -1 为无限
         self.break_on_success = step_data.get("break_on_success", True)
         self.condition_action = None
         cond_data = step_data.get("condition_action")

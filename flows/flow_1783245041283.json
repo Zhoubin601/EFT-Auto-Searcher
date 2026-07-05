@@ -1,6 +1,6 @@
 {
-    "id": "flow_1783242059133",
-    "name": "自动购买7n1",
+    "id": "flow_1783245041283",
+    "name": "自动购买M80",
     "enabled": false,
     "steps": [
         {
@@ -55,7 +55,7 @@
                 "confidence": 0.8,
                 "click_after_search": "left",
                 "selected_files": [
-                    "Prapor.png"
+                    "Peacekeeper.png"
                 ]
             }
         },
@@ -75,7 +75,7 @@
                 "confidence": 0.9,
                 "click_after_search": "right",
                 "selected_files": [
-                    "7n1.png"
+                    "m80.png"
                 ]
             }
         },
@@ -115,7 +115,7 @@
                 "confidence": 0.8,
                 "click_after_search": "none",
                 "selected_files": [
-                    "Prapor名字.png"
+                    "Peacekeeper名字.png"
                 ]
             }
         },
