@@ -104,6 +104,7 @@ class ActionImageSearch(Action):
         self.search_type = step_data.get("search_type", "single")
         self.target = step_data.get("target", "")
         self.confidence = step_data.get("confidence", 0.8)
+        self.click_after_search = step_data.get("click_after_search", "none")
         
     def execute(self, context, flow_state):
         if not flow_state['running']: return
@@ -145,10 +146,17 @@ class ActionImageSearch(Action):
             for template in templates:
                 if not flow_state['running']: break
                 res = cv2.matchTemplate(screen_bgr, template, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(res)
+                _, max_val, _, max_loc = cv2.minMaxLoc(res)
                 
                 if max_val >= self.confidence:
                     context['last_search_success'] = True
+                    if self.click_after_search in ["left", "right"]:
+                        h, w = template.shape[:2]
+                        center_x = max_loc[0] + w // 2
+                        center_y = max_loc[1] + h // 2
+                        win32_mouse_move(center_x, center_y)
+                        time.sleep(0.05)
+                        win32_click(self.click_after_search)
                     break
 
 class ActionCondition(Action):

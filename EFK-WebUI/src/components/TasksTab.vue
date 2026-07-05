@@ -155,7 +155,7 @@ const cloneComponent = (cmp) => {
   if (cmp.action === 'mouse_move') { step.x = 0; step.y = 0; }
   if (cmp.action === 'mouse_click') { step.button = 'left'; step.modifier = 'none'; }
   if (cmp.action === 'key_press') { step.key = 'esc'; }
-  if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; }
+  if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; step.click_after_search = 'none'; }
   if (cmp.action === 'condition') { step.if = 'last_search_success'; step.then = []; step.condition_list = []; }
   if (cmp.action === 'loop') { step.count = -1; step.break_on_success = true; step.children = []; step.condition_list = []; }
   return step
@@ -326,6 +326,14 @@ const getStepName = (action) => {
               <div class="flex gap-sm align-center mt-xs">
                 <span class="caption">相似度(0-1):</span>
                 <input type="number" step="0.1" v-model="activeStepData.confidence" class="search-input" style="height: 32px; width: 80px;">
+              </div>
+              <div class="flex gap-sm align-center mt-xs">
+                <span class="caption">匹配后点击:</span>
+                <select v-model="activeStepData.click_after_search" class="search-input flex-1" style="height: 32px;">
+                  <option value="none">无动作</option>
+                  <option value="left">移动至中心并左键点击</option>
+                  <option value="right">移动至中心并右键点击</option>
+                </select>
               </div>
             </div>
 
