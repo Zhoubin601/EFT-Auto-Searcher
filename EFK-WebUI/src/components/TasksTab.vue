@@ -156,7 +156,8 @@ const availableComponents = ref([
   { action: 'key_press', name: '键盘按键' },
   { action: 'image_search', name: '识图' },
   { action: 'condition', name: '条件(If)' },
-  { action: 'loop', name: '循环(Loop)' }
+  { action: 'loop', name: '循环(Loop)' },
+  { action: 'call_flow', name: '调用任务' }
 ])
 
 const cloneComponent = (cmp) => {
@@ -168,6 +169,7 @@ const cloneComponent = (cmp) => {
   if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; step.click_after_search = 'none'; step.selected_files = []; }
   if (cmp.action === 'condition') { step.if = 'last_search_success'; step.then = []; step.condition_list = []; }
   if (cmp.action === 'loop') { step.count = -1; step.break_on_success = true; step.children = []; step.condition_list = []; }
+  if (cmp.action === 'call_flow') { step.flow_id = ''; }
   return step
 }
 
@@ -382,6 +384,17 @@ const getStepName = (action) => {
                 <span class="caption">判定依据:</span>
                 <select v-model="activeStepData.if" class="search-input w-full" style="height: 32px;">
                   <option value="last_search_success">上一次识图成功 (推荐通过条件插槽)</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- 调用任务 -->
+            <div v-if="activeStepData.action === 'call_flow'" class="grid-1col gap-sm">
+              <div class="flex gap-sm align-center">
+                <span class="caption">选择任务:</span>
+                <select v-model="activeStepData.flow_id" class="search-input w-full" style="height: 32px;">
+                  <option disabled value="">请选择要调用的任务</option>
+                  <option v-for="f in flows.filter(f => f.id !== editingFlow.id)" :key="f.id" :value="f.id">{{ f.name }}</option>
                 </select>
               </div>
             </div>

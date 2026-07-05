@@ -211,6 +211,22 @@ class ActionLoop(Action):
                 action.execute(context, flow_state)
             c += 1
 
+class ActionCallFlow(Action):
+    def __init__(self, step_data):
+        self.flow_id = step_data.get("flow_id", "")
+        
+    def execute(self, context, flow_state):
+        if not flow_state['running']: return
+        if not self.flow_id: return
+        
+        flow_data = flow_manager.flows.get(self.flow_id)
+        if not flow_data: return
+        
+        actions = build_actions(flow_data.get("steps", []))
+        for action in actions:
+            if not flow_state['running']: break
+            action.execute(context, flow_state)
+
 def build_actions(steps):
     actions = []
     for step in steps:
@@ -229,6 +245,8 @@ def build_actions(steps):
             actions.append(ActionCondition(step))
         elif action_type == "loop":
             actions.append(ActionLoop(step))
+        elif action_type == "call_flow":
+            actions.append(ActionCallFlow(step))
     return actions
 
 # ================= 并发调度管理器 =================

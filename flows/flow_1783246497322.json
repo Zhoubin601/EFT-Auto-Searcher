@@ -1,0 +1,103 @@
+{
+    "id": "flow_1783246497322",
+    "name": "自动购买主线",
+    "enabled": false,
+    "steps": [
+        {
+            "action": "call_flow",
+            "flow_id": "flow_1783242059133"
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "call_flow",
+            "flow_id": "flow_1783244475504"
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "call_flow",
+            "flow_id": "flow_1783245041283"
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "call_flow",
+            "flow_id": "flow_1783245199404"
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "call_flow",
+            "flow_id": "flow_1783245208922"
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "call_flow",
+            "flow_id": "flow_1783245215346"
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "key_press",
+            "key": "esc"
+        }
+    ]
+}
