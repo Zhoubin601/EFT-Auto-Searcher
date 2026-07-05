@@ -19,6 +19,14 @@ const state = ref({
 
 const currentTab = ref('home')
 
+const tabs = {
+  home: '首页',
+  settings: '基本参数',
+  ammo: '弹药装填',
+  images: '图像管理',
+  tasks: '自动化任务'
+}
+
 const inputConfidence = ref(0.8)
 const inputCooldown = ref(0.1)
 const inputAmmoCount = ref(1)
@@ -118,21 +126,20 @@ const exitProgram = () => apiCall('exit_program')
 <template>
   <!-- 拖拽标题栏 -->
   <div class="titlebar pywebview-drag-region">
+    <div class="titlebar-left" style="-webkit-app-region: no-drag; position: absolute; left: 8px;">
+      <div class="dropdown">
+        <button class="dropdown-btn">{{ tabs[currentTab] }} ▼</button>
+        <div class="dropdown-content">
+          <a v-for="(name, id) in tabs" :key="id" @click="currentTab = id">{{ name }}</a>
+          <div class="dropdown-divider"></div>
+          <a class="text-red" @click="exitProgram">退出程序</a>
+        </div>
+      </div>
+    </div>
     <div class="titlebar-title">EFT Auto Searcher</div>
   </div>
 
   <div class="app-layout">
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-      <button class="nav-item" :class="{ active: currentTab === 'home' }" @click="currentTab = 'home'">首页</button>
-      <button class="nav-item" :class="{ active: currentTab === 'settings' }" @click="currentTab = 'settings'">基本参数</button>
-      <button class="nav-item" :class="{ active: currentTab === 'ammo' }" @click="currentTab = 'ammo'">弹药装填</button>
-      <button class="nav-item" :class="{ active: currentTab === 'images' }" @click="currentTab = 'images'">图像管理</button>
-      <button class="nav-item" :class="{ active: currentTab === 'tasks' }" @click="currentTab = 'tasks'">自动化任务</button>
-      <div style="flex: 1"></div>
-      <button class="nav-item text-red" @click="exitProgram">退出程序</button>
-    </div>
-
     <!-- 主内容区 -->
     <div class="main-content">
       <div class="content-wrapper">

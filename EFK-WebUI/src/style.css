@@ -63,15 +63,6 @@ body {
   display: flex;
   height: calc(100vh - 44px);
 }
-.sidebar {
-  width: 140px;
-  background-color: var(--canvas-parchment);
-  border-right: 1px solid var(--hairline);
-  padding: var(--space-md) var(--space-xs);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
 .main-content {
   flex: 1;
   background-color: var(--canvas);
@@ -82,28 +73,60 @@ body {
   max-width: 500px;
   margin: 0 auto;
 }
-
-/* 侧边栏导航项 */
-.nav-item {
-  padding: 8px 16px;
-  border-radius: var(--rounded-md);
-  color: var(--ink-muted-80);
-  font-weight: 400;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
+/* 下拉菜单 */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  -webkit-app-region: no-drag;
+}
+.dropdown-btn {
   background: transparent;
   border: none;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--rounded-sm);
   font-family: inherit;
 }
-.nav-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+.dropdown-btn:hover {
+  background: rgba(0,0,0,0.05);
 }
-.nav-item.active {
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--surface-pearl);
+  min-width: 130px;
+  box-shadow: 0px 8px 24px 0px rgba(0,0,0,0.15);
+  z-index: 200;
+  border-radius: var(--rounded-md);
+  padding: 6px 0;
+  border: 1px solid var(--hairline);
+}
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.dropdown-content a {
+  color: var(--ink);
+  padding: 8px 16px;
+  text-decoration: none;
+  display: block;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+.dropdown-content a:hover {
   background-color: rgba(0, 102, 204, 0.1);
   color: var(--primary);
   font-weight: 600;
+}
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--hairline);
+  margin: 4px 0;
 }
 
 /* Typography */
