@@ -10,6 +10,11 @@ import random
 from pynput import mouse, keyboard
 import json
 import webview
+import shutil
+
+AUTOGRAPH_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "AutoGraph")
+if not os.path.exists(AUTOGRAPH_DIR):
+    os.makedirs(AUTOGRAPH_DIR)
 
 try:
     from flows_engine import flow_manager
@@ -411,6 +416,59 @@ class Api:
         except:
             pass
 
+    # --- 自动化图库 (AutoGraph) API ---
+    def get_autograph_libs(self):
+        try:
+            if not os.path.exists(AUTOGRAPH_DIR): return []
+            return [d for d in os.listdir(AUTOGRAPH_DIR) if os.path.isdir(os.path.join(AUTOGRAPH_DIR, d))]
+        except:
+            return []
+
+    def create_autograph_lib(self, name):
+        try:
+            if not name: return False
+            p = os.path.join(AUTOGRAPH_DIR, name)
+            if not os.path.exists(p):
+                os.makedirs(p)
+            return True
+        except:
+            return False
+
+    def delete_autograph_lib(self, name):
+        try:
+            if not name: return False
+            p = os.path.join(AUTOGRAPH_DIR, name)
+            if os.path.exists(p) and os.path.isdir(p):
+                shutil.rmtree(p)
+            return True
+        except:
+            return False
+
+    def get_autograph_lib_files(self, name):
+        try:
+            if not name: return []
+            p = os.path.join(AUTOGRAPH_DIR, name)
+            if not os.path.exists(p): return []
+            return [f for f in os.listdir(p) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp'))]
+        except:
+            return []
+
+    def import_to_autograph_lib(self, name):
+        try:
+            file_types = ('Image files (*.png;*.jpg;*.jpeg;*.bmp)', 'All files (*.*)')
+            result = self.window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=True, file_types=file_types)
+            if result and len(result) > 0:
+                p = os.path.join(AUTOGRAPH_DIR, name)
+                if not os.path.exists(p): os.makedirs(p)
+                for filepath in result:
+                    if os.path.isfile(filepath):
+                        shutil.copy2(filepath, p)
+                return True
+            return False
+        except:
+            return False
+
+
 
 # ================= 键鼠监听 =================
 def on_key_press(key):
@@ -517,7 +575,8 @@ if __name__ == '__main__':
     window.expose(api.get_state, api.update_cfg, api.start_record_key, api.start_area, api.reset_area,
                   api.toggle_ammo_pos_setting, api.save_ammo_count, api.start_ammo_batch, api.stop_ammo_batch,
                   api.add_image, api.auto_add_images, api.remove_images, api.remove_all_images, api.restore_all, api.exit_program,
-                  api.get_flows, api.save_flow, api.delete_flow, api.start_flow, api.stop_flow)
+                  api.get_flows, api.save_flow, api.delete_flow, api.start_flow, api.stop_flow,
+                  api.get_autograph_libs, api.create_autograph_lib, api.delete_autograph_lib, api.get_autograph_lib_files, api.import_to_autograph_lib)
     
     # 使用 Edge Chromium 渲染，并在窗口准备好后启动后台线程
     webview.start(on_startup, window, gui='edgechromium', debug=True)

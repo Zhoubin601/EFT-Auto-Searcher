@@ -101,6 +101,7 @@ class ActionKeyPress(Action):
 
 class ActionImageSearch(Action):
     def __init__(self, step_data):
+        self.search_type = step_data.get("search_type", "single")
         self.target = step_data.get("target", "")
         self.confidence = step_data.get("confidence", 0.8)
         
@@ -111,24 +112,44 @@ class ActionImageSearch(Action):
         if not self.target:
             return
 
-        # 获取目标图片的绝对路径
-        target_path = self.target
-        if not os.path.isabs(target_path):
-            target_path = os.path.join(BASE_DIR, target_path)
+        target_paths = []
+        if self.search_type == "lib":
+            lib_path = os.path.join(BASE_DIR, "AutoGraph", self.target)
+            if os.path.exists(lib_path) and os.path.isdir(lib_path):
+                for f in os.listdir(lib_path):
+                    if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                        target_paths.append(os.path.join(lib_path, f))
+        else:
+            p = self.target
+            if not os.path.isabs(p):
+                p = os.path.join(BASE_DIR, p)
+            target_paths.append(p)
 
-        template = cv2_imread_cn(target_path)
-        if template is None:
+        if not target_paths:
+            return
+
+        templates = []
+        for p in target_paths:
+            img = cv2_imread_cn(p)
+            if img is not None:
+                templates.append(img)
+                
+        if not templates:
             return
 
         with mss.mss() as sct:
             monitor = sct.monitors[1] # 默认主屏幕
             screenshot = np.array(sct.grab(monitor))
             screen_bgr = cv2.cvtColor(screenshot, cv2.COLOR_BGRA2BGR)
-            res = cv2.matchTemplate(screen_bgr, template, cv2.TM_CCOEFF_NORMED)
-            _, max_val, _, _ = cv2.minMaxLoc(res)
             
-            if max_val >= self.confidence:
-                context['last_search_success'] = True
+            for template in templates:
+                if not flow_state['running']: break
+                res = cv2.matchTemplate(screen_bgr, template, cv2.TM_CCOEFF_NORMED)
+                _, max_val, _, _ = cv2.minMaxLoc(res)
+                
+                if max_val >= self.confidence:
+                    context['last_search_success'] = True
+                    break
 
 class ActionCondition(Action):
     def __init__(self, step_data):

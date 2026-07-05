@@ -12,12 +12,15 @@ const props = defineProps({
 const flows = ref([])
 const editingFlow = ref(null)
 const activeStepIndex = ref(null)
+const autographLibs = ref([])
 
 const loadFlows = async () => {
   const result = await props.apiCall('get_flows')
   if (result) {
     flows.value = result
   }
+  const libsResult = await props.apiCall('get_autograph_libs')
+  if (libsResult) autographLibs.value = libsResult
 }
 
 let pollInterval = null
@@ -101,7 +104,7 @@ const cloneComponent = (cmp) => {
   if (cmp.action === 'mouse_move') { step.x = 0; step.y = 0; }
   if (cmp.action === 'mouse_click') { step.button = 'left'; step.modifier = 'none'; }
   if (cmp.action === 'key_press') { step.key = 'esc'; }
-  if (cmp.action === 'image_search') { step.target = ''; step.confidence = 0.8; }
+  if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; }
   return step
 }
 
@@ -115,9 +118,8 @@ const getStepName = (action) => {
   <div>
     <!-- 列表视图 -->
     <div v-if="!editingFlow">
-      <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h2 class="display-md">自动化任务</h2>
-        <button class="button-primary" @click="createNewFlow">新建任务</button>
+      <div class="flex" style="justify-content: flex-end; align-items: center; margin-bottom: 12px;">
+        <button class="button-primary" style="padding: 6px 16px; font-size: 13px;" @click="createNewFlow">+ 新建任务</button>
       </div>
 
       <div class="grid-1col gap-md">
@@ -143,11 +145,10 @@ const getStepName = (action) => {
 
     <!-- 编辑视图 -->
     <div v-else>
-      <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h2 class="display-md">编辑任务</h2>
+      <div class="flex" style="justify-content: flex-end; align-items: center; margin-bottom: 12px;">
         <div class="flex gap-sm">
-          <button class="button-pearl-capsule" @click="editingFlow = null">取消</button>
-          <button class="button-primary" @click="saveFlow">保存</button>
+          <button class="button-pearl-capsule" style="padding: 6px 16px; font-size: 13px;" @click="editingFlow = null">取消</button>
+          <button class="button-primary" style="padding: 6px 16px; font-size: 13px;" @click="saveFlow">保存</button>
         </div>
       </div>
 
@@ -264,10 +265,26 @@ const getStepName = (action) => {
 
             <!-- 识图 -->
             <div v-if="editingFlow.steps[activeStepIndex].action === 'image_search'" class="grid-1col gap-sm">
-              <div>
+              <div class="flex gap-sm align-center">
+                <span class="caption">模式:</span>
+                <select v-model="editingFlow.steps[activeStepIndex].search_type" class="search-input flex-1" style="height: 32px;">
+                  <option value="single">单张图片</option>
+                  <option value="lib">自动化图库 (OR)</option>
+                </select>
+              </div>
+              
+              <div v-if="editingFlow.steps[activeStepIndex].search_type === 'lib'">
+                <div class="caption mb-xs">选择图库:</div>
+                <select v-model="editingFlow.steps[activeStepIndex].target" class="search-input w-full" style="height: 32px;">
+                  <option disabled value="">请选择图库</option>
+                  <option v-for="lib in autographLibs" :key="lib" :value="lib">{{ lib }}</option>
+                </select>
+              </div>
+              <div v-else>
                 <div class="caption mb-xs">图片路径:</div>
                 <input type="text" v-model="editingFlow.steps[activeStepIndex].target" class="search-input w-full" style="height: 32px;">
               </div>
+
               <div class="flex gap-sm align-center mt-xs">
                 <span class="caption">相似度(0-1):</span>
                 <input type="number" step="0.1" v-model="editingFlow.steps[activeStepIndex].confidence" class="search-input" style="height: 32px; width: 80px;">

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import TasksTab from './components/TasksTab.vue'
+import AutoGraphTab from './components/AutoGraphTab.vue'
 
 const state = ref({
   is_running: false,
@@ -21,9 +22,9 @@ const currentTab = ref('home')
 
 const tabs = {
   home: '首页',
-  settings: '基本参数',
+  settings: '自动搜索',
   ammo: '弹药装填',
-  images: '图像管理',
+  autograph: '自动化图库',
   tasks: '自动化任务'
 }
 
@@ -130,7 +131,7 @@ const exitProgram = () => apiCall('exit_program')
       <div class="dropdown">
         <button class="dropdown-btn">{{ tabs[currentTab] }} ▼</button>
         <div class="dropdown-content">
-          <a v-for="(name, id) in tabs" :key="id" @click.prevent="if(currentTab !== id) currentTab = id">{{ name }}</a>
+          <a v-for="(name, id) in tabs" :key="id" @click.prevent="currentTab = id">{{ name }}</a>
           <div class="dropdown-divider"></div>
           <a class="text-red" @click.prevent="exitProgram">退出程序</a>
         </div>
@@ -170,10 +171,8 @@ const exitProgram = () => apiCall('exit_program')
           </section>
         </div>
 
-        <!-- 基本参数 (Settings) -->
+        <!-- 自动搜索 (原基本参数 + 图像管理) -->
         <div v-if="currentTab === 'settings'">
-          <h2 class="display-md mb-lg">基本参数</h2>
-          
           <section class="store-utility-card mb-xl">
             <h3 class="body-strong mb-md">运行配置</h3>
             <div class="form-row">
@@ -207,6 +206,29 @@ const exitProgram = () => apiCall('exit_program')
             </div>
           </section>
 
+          <section class="store-utility-card mb-xl">
+            <h3 class="body-strong mb-xs">识别库</h3>
+            <p class="caption muted mb-md">所有的图像模板将被自动保存。OpenCV 将会在界面中搜寻这些图案。</p>
+            
+            <div class="image-list-container mb-md">
+              <div v-for="(img, idx) in state.icon_files" :key="idx"
+                   class="image-list-item"
+                   :class="{ selected: selectedImages.includes(idx) }"
+                   @click="toggleImageSelection(idx)">
+                {{ img.split('\\').pop().split('/').pop() }}
+              </div>
+            </div>
+            
+            <div class="grid-2col gap-sm">
+              <button class="button-primary" @click="autoAddImages">自动加载 Graph 图库</button>
+              <button class="button-secondary-pill" @click="addImage">手动添加单张</button>
+            </div>
+            <div class="grid-2col gap-sm mt-sm">
+              <button class="button-dark-utility" @click="removeImage">删除选中项</button>
+              <button class="button-dark-utility" style="background-color: #ff3b30;" @click="removeAllImages">清空所有</button>
+            </div>
+          </section>
+
           <div class="text-center mt-xl">
             <button class="button-pearl-capsule" @click="restoreAll">一键恢复所有默认设置</button>
           </div>
@@ -214,8 +236,6 @@ const exitProgram = () => apiCall('exit_program')
 
         <!-- 弹药装填 (Ammo Batch) -->
         <div v-if="currentTab === 'ammo'">
-          <h2 class="display-md mb-lg">弹药装填</h2>
-          
           <section class="store-utility-card mb-xl">
             <h3 class="body-strong mb-md">7×7 网格装填</h3>
             <div class="caption muted mb-md" style="word-wrap: break-word; line-height: 1.8;">
@@ -253,32 +273,9 @@ const exitProgram = () => apiCall('exit_program')
           </section>
         </div>
 
-        <!-- 图像管理 (Images) -->
-        <div v-if="currentTab === 'images'">
-          <h2 class="display-md mb-lg">图像管理</h2>
-          
-          <section class="store-utility-card mb-xl">
-            <h3 class="body-strong mb-xs">识别库</h3>
-            <p class="caption muted mb-md">所有的图像模板将被自动保存。OpenCV 将会在界面中搜寻这些图案。</p>
-            
-            <div class="image-list-container mb-md">
-              <div v-for="(img, idx) in state.icon_files" :key="idx"
-                   class="image-list-item"
-                   :class="{ selected: selectedImages.includes(idx) }"
-                   @click="toggleImageSelection(idx)">
-                {{ img.split('\\').pop().split('/').pop() }}
-              </div>
-            </div>
-            
-            <div class="grid-2col gap-sm">
-              <button class="button-primary" @click="autoAddImages">自动加载 Graph 图库</button>
-              <button class="button-secondary-pill" @click="addImage">手动添加单张</button>
-            </div>
-            <div class="grid-2col gap-sm mt-sm">
-              <button class="button-dark-utility" @click="removeImage">删除选中项</button>
-              <button class="button-dark-utility" style="background-color: #ff3b30;" @click="removeAllImages">清空所有</button>
-            </div>
-          </section>
+        <!-- 自动化图库 (AutoGraph) -->
+        <div v-if="currentTab === 'autograph'">
+          <AutoGraphTab :apiCall="apiCall" />
         </div>
 
         <!-- 自定义任务流 (Tasks) -->
