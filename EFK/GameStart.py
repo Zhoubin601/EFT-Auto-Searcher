@@ -11,6 +11,11 @@ from pynput import mouse, keyboard
 import json
 import webview
 
+try:
+    from flows_engine import flow_manager
+except ImportError:
+    pass
+
 # ================= 解决路径与中文编码问题 =================
 def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
@@ -368,8 +373,43 @@ class Api:
 
     def exit_program(self):
         cfg.exit_program = True
+        try:
+            flow_manager.stop_all()
+        except:
+            pass
         self.window.destroy()
         os._exit(0)
+
+    # --- 自定义任务流 API ---
+    def get_flows(self):
+        try:
+            return flow_manager.get_all_flows()
+        except:
+            return []
+
+    def save_flow(self, flow_data):
+        try:
+            return flow_manager.save_flow(flow_data)
+        except:
+            return None
+
+    def delete_flow(self, flow_id):
+        try:
+            flow_manager.delete_flow(flow_id)
+        except:
+            pass
+
+    def start_flow(self, flow_id):
+        try:
+            flow_manager.start_flow(flow_id)
+        except:
+            pass
+
+    def stop_flow(self, flow_id):
+        try:
+            flow_manager.stop_flow(flow_id)
+        except:
+            pass
 
 
 # ================= 键鼠监听 =================
@@ -476,7 +516,8 @@ if __name__ == '__main__':
     
     window.expose(api.get_state, api.update_cfg, api.start_record_key, api.start_area, api.reset_area,
                   api.toggle_ammo_pos_setting, api.save_ammo_count, api.start_ammo_batch, api.stop_ammo_batch,
-                  api.add_image, api.auto_add_images, api.remove_images, api.remove_all_images, api.restore_all, api.exit_program)
+                  api.add_image, api.auto_add_images, api.remove_images, api.remove_all_images, api.restore_all, api.exit_program,
+                  api.get_flows, api.save_flow, api.delete_flow, api.start_flow, api.stop_flow)
     
     # 使用 Edge Chromium 渲染，并在窗口准备好后启动后台线程
     webview.start(on_startup, window, gui='edgechromium', debug=True)

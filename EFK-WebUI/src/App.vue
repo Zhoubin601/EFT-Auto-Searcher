@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import TasksTab from './components/TasksTab.vue'
 
 const state = ref({
   is_running: false,
@@ -127,6 +128,7 @@ const exitProgram = () => apiCall('exit_program')
       <button class="nav-item" :class="{ active: currentTab === 'settings' }" @click="currentTab = 'settings'">基本参数</button>
       <button class="nav-item" :class="{ active: currentTab === 'ammo' }" @click="currentTab = 'ammo'">弹药装填</button>
       <button class="nav-item" :class="{ active: currentTab === 'images' }" @click="currentTab = 'images'">图像管理</button>
+      <button class="nav-item" :class="{ active: currentTab === 'tasks' }" @click="currentTab = 'tasks'">自动化任务</button>
       <div style="flex: 1"></div>
       <button class="nav-item text-red" @click="exitProgram">退出程序</button>
     </div>
@@ -270,6 +272,11 @@ const exitProgram = () => apiCall('exit_program')
               <button class="button-dark-utility" style="background-color: #ff3b30;" @click="removeAllImages">清空所有</button>
             </div>
           </section>
+        </div>
+
+        <!-- 自定义任务流 (Tasks) -->
+        <div v-if="currentTab === 'tasks'">
+          <TasksTab :apiCall="apiCall" />
         </div>
 
       </div>

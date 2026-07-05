@@ -1,0 +1,27 @@
+{
+    "id": "flow_1783233189136",
+    "name": "Test",
+    "enabled": false,
+    "steps": [
+        {
+            "action": "image_search",
+            "target": "\"C:\\Users\\a3185\\Desktop\\Snipaste_2026-07-05_14-33-47.png\"",
+            "confidence": 0.8
+        },
+        {
+            "action": "mouse_move",
+            "x": 36,
+            "y": 898
+        },
+        {
+            "action": "mouse_click",
+            "button": "left",
+            "modifier": "none"
+        },
+        {
+            "action": "mouse_click",
+            "button": "left",
+            "modifier": "none"
+        }
+    ]
+}
