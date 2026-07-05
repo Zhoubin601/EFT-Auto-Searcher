@@ -130,9 +130,9 @@ const exitProgram = () => apiCall('exit_program')
       <div class="dropdown">
         <button class="dropdown-btn">{{ tabs[currentTab] }} ▼</button>
         <div class="dropdown-content">
-          <a v-for="(name, id) in tabs" :key="id" @click="currentTab = id">{{ name }}</a>
+          <a v-for="(name, id) in tabs" :key="id" @click.prevent="if(currentTab !== id) currentTab = id">{{ name }}</a>
           <div class="dropdown-divider"></div>
-          <a class="text-red" @click="exitProgram">退出程序</a>
+          <a class="text-red" @click.prevent="exitProgram">退出程序</a>
         </div>
       </div>
     </div>
