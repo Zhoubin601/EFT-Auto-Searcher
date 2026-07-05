@@ -1,0 +1,157 @@
+{
+    "id": "flow_1783242059133",
+    "name": "每日自动购买",
+    "enabled": false,
+    "steps": [
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.8,
+                "click_after_search": "none",
+                "selected_files": [
+                    "主页.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.8,
+                "click_after_search": "left",
+                "selected_files": [
+                    "商人.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.8,
+                "click_after_search": "left",
+                "selected_files": [
+                    "Prapor.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.9,
+                "click_after_search": "right",
+                "selected_files": [
+                    "7n1.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 3000
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.8,
+                "click_after_search": "left",
+                "selected_files": [
+                    "搜索物品.png"
+                ]
+            }
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.8,
+                "click_after_search": "none",
+                "selected_files": [
+                    "7n1.png"
+                ]
+            }
+        },
+        {
+            "action": "condition",
+            "if": "last_search_success",
+            "then": [
+                {
+                    "action": "image_search",
+                    "search_type": "lib",
+                    "target": "Buy",
+                    "confidence": 0.8,
+                    "click_after_search": "left",
+                    "selected_files": [
+                        "购买.png"
+                    ]
+                },
+                {
+                    "action": "key_press",
+                    "key": "Y"
+                },
+                {
+                    "action": "sleep",
+                    "duration": 3000
+                }
+            ],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "Buy",
+                "confidence": 0.8,
+                "click_after_search": "left",
+                "selected_files": [
+                    "购买.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 1000
+        }
+    ]
+}

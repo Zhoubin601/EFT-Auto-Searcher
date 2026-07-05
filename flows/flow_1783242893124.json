@@ -1,0 +1,11 @@
+{
+    "id": "flow_1783242893124",
+    "name": "新建自动化任务",
+    "enabled": false,
+    "steps": [
+        {
+            "action": "key_press",
+            "key": "WIN"
+        }
+    ]
+}

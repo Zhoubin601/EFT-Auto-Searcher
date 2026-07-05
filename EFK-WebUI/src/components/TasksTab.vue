@@ -14,6 +14,7 @@ const flows = ref([])
 const editingFlow = ref(null)
 const activeStepId = ref(null)
 const autographLibs = ref([])
+const autographLibFiles = ref({})
 
 const loadFlows = async () => {
   const result = await props.apiCall('get_flows')
@@ -21,7 +22,15 @@ const loadFlows = async () => {
     flows.value = result
   }
   const libsResult = await props.apiCall('get_autograph_libs')
-  if (libsResult) autographLibs.value = libsResult
+  if (libsResult) {
+    autographLibs.value = libsResult
+    if (editingFlow.value) {
+      for (const lib of libsResult) {
+        const files = await props.apiCall('get_autograph_lib_files', lib)
+        autographLibFiles.value[lib] = files || []
+      }
+    }
+  }
 }
 
 let pollInterval = null
@@ -50,6 +59,7 @@ const editFlow = (flow) => {
     if (!arr) return
     arr.forEach(s => {
       if (!s._id) s._id = Date.now() + Math.random().toString()
+      if (s.action === 'image_search' && !s.selected_files) s.selected_files = []
       if (s.condition_action) {
         s.condition_list = [s.condition_action]
         delete s.condition_action
@@ -155,7 +165,7 @@ const cloneComponent = (cmp) => {
   if (cmp.action === 'mouse_move') { step.x = 0; step.y = 0; }
   if (cmp.action === 'mouse_click') { step.button = 'left'; step.modifier = 'none'; }
   if (cmp.action === 'key_press') { step.key = 'esc'; }
-  if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; step.click_after_search = 'none'; }
+  if (cmp.action === 'image_search') { step.search_type = 'single'; step.target = ''; step.confidence = 0.8; step.click_after_search = 'none'; step.selected_files = []; }
   if (cmp.action === 'condition') { step.if = 'last_search_success'; step.then = []; step.condition_list = []; }
   if (cmp.action === 'loop') { step.count = -1; step.break_on_success = true; step.children = []; step.condition_list = []; }
   return step
@@ -313,10 +323,23 @@ const getStepName = (action) => {
               
               <div v-if="activeStepData.search_type === 'lib'">
                 <div class="caption mb-xs">选择图库:</div>
-                <select v-model="activeStepData.target" class="search-input w-full" style="height: 32px;">
+                <select v-model="activeStepData.target" class="search-input w-full" style="height: 32px;" @change="activeStepData.selected_files = []">
                   <option disabled value="">请选择图库</option>
                   <option v-for="lib in autographLibs" :key="lib" :value="lib">{{ lib }}</option>
                 </select>
+                
+                <div v-if="activeStepData.target" class="mt-xs">
+                  <div class="caption mb-xs">选择指定图片 (不选则默认全库):</div>
+                  <div style="max-height: 100px; overflow-y: auto; background: var(--canvas); border: 1px solid var(--hairline); border-radius: 6px; padding: 4px;">
+                    <label v-for="file in autographLibFiles[activeStepData.target]" :key="file" class="flex gap-xs align-center" style="font-size: 12px; cursor: pointer; padding: 2px 4px;">
+                      <input type="checkbox" :value="file" v-model="activeStepData.selected_files">
+                      {{ file }}
+                    </label>
+                    <div v-if="!autographLibFiles[activeStepData.target]?.length" class="caption muted text-center py-xs">
+                      该图库为空
+                    </div>
+                  </div>
+                </div>
               </div>
               <div v-else>
                 <div class="caption mb-xs">图片路径:</div>

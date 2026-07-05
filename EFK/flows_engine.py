@@ -46,7 +46,7 @@ VK_MAP = {
     'esc': 0x1B, 'enter': 0x0D, 'space': 0x20, 'a': 0x41, 'b': 0x42, 'c': 0x43, 'd': 0x44,
     'e': 0x45, 'f': 0x46, 'g': 0x47, 'h': 0x48, 'i': 0x49, 'j': 0x4A, 'k': 0x4B, 'l': 0x4C,
     'm': 0x4D, 'n': 0x4E, 'o': 0x4F, 'p': 0x50, 'q': 0x51, 'r': 0x52, 's': 0x53, 't': 0x54,
-    'u': 0x55, 'v': 0x56, 'w': 0x57, 'x': 0x58, 'y': 0x59, 'z': 0x5A
+    'u': 0x55, 'v': 0x56, 'w': 0x57, 'x': 0x58, 'y': 0x59, 'z': 0x5A, 'win': 0x5B
 }
 
 def win32_key_press(key):
@@ -105,6 +105,7 @@ class ActionImageSearch(Action):
         self.target = step_data.get("target", "")
         self.confidence = step_data.get("confidence", 0.8)
         self.click_after_search = step_data.get("click_after_search", "none")
+        self.selected_files = step_data.get("selected_files", [])
         
     def execute(self, context, flow_state):
         if not flow_state['running']: return
@@ -119,7 +120,8 @@ class ActionImageSearch(Action):
             if os.path.exists(lib_path) and os.path.isdir(lib_path):
                 for f in os.listdir(lib_path):
                     if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
-                        target_paths.append(os.path.join(lib_path, f))
+                        if not self.selected_files or f in self.selected_files:
+                            target_paths.append(os.path.join(lib_path, f))
         else:
             p = self.target
             if not os.path.isabs(p):
