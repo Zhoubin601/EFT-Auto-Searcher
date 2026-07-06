@@ -256,26 +256,62 @@ class FlowManager:
         self.flow_states = {} # id -> {'running': bool, 'thread': Thread}
         self.load_all_flows()
 
-    def load_all_flows(self):
-        self.flows.clear()
-        if not os.path.exists(FLOWS_DIR):
+    def _load_json_files(self, directory, folder=""):
+        """加载指定目录下的所有 JSON flow 文件"""
+        if not os.path.exists(directory):
             return
-        for filename in os.listdir(FLOWS_DIR):
-            if filename.endswith(".json"):
-                filepath = os.path.join(FLOWS_DIR, filename)
+        for filename in os.listdir(directory):
+            filepath = os.path.join(directory, filename)
+            if filename.endswith(".json") and os.path.isfile(filepath):
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         if "id" in data:
+                            data["folder"] = folder
                             self.flows[data["id"]] = data
                 except Exception as e:
                     print(f"Error loading flow {filename}: {e}")
+
+    def load_all_flows(self):
+        self.flows.clear()
+        if not os.path.exists(FLOWS_DIR):
+            return
+        # 加载根目录下的 flow
+        self._load_json_files(FLOWS_DIR, folder="")
+        # 加载子目录（文件夹）下的 flow
+        for entry in os.listdir(FLOWS_DIR):
+            subdir = os.path.join(FLOWS_DIR, entry)
+            if os.path.isdir(subdir):
+                self._load_json_files(subdir, folder=entry)
 
     def save_flow(self, flow_data):
         if "id" not in flow_data:
             flow_data["id"] = f"flow_{int(time.time()*1000)}"
         flow_id = flow_data["id"]
-        filepath = os.path.join(FLOWS_DIR, f"{flow_id}.json")
+        new_folder = flow_data.get("folder", "")
+
+        # 如果任务之前存在，检查是否需要迁移（旧文件夹 -> 新文件夹）
+        old_data = self.flows.get(flow_id)
+        if old_data:
+            old_folder = old_data.get("folder", "")
+            if old_folder != new_folder:
+                # 删除旧位置的文件
+                if old_folder:
+                    old_path = os.path.join(FLOWS_DIR, old_folder, f"{flow_id}.json")
+                else:
+                    old_path = os.path.join(FLOWS_DIR, f"{flow_id}.json")
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+
+        # 确定新的保存路径
+        if new_folder:
+            target_dir = os.path.join(FLOWS_DIR, new_folder)
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+            filepath = os.path.join(target_dir, f"{flow_id}.json")
+        else:
+            filepath = os.path.join(FLOWS_DIR, f"{flow_id}.json")
+
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(flow_data, f, indent=4, ensure_ascii=False)
         self.flows[flow_id] = flow_data
@@ -283,11 +319,16 @@ class FlowManager:
 
     def delete_flow(self, flow_id):
         self.stop_flow(flow_id)
-        if flow_id in self.flows:
+        flow_data = self.flows.get(flow_id)
+        if flow_data:
+            folder = flow_data.get("folder", "")
+            if folder:
+                filepath = os.path.join(FLOWS_DIR, folder, f"{flow_id}.json")
+            else:
+                filepath = os.path.join(FLOWS_DIR, f"{flow_id}.json")
+            if os.path.exists(filepath):
+                os.remove(filepath)
             del self.flows[flow_id]
-        filepath = os.path.join(FLOWS_DIR, f"{flow_id}.json")
-        if os.path.exists(filepath):
-            os.remove(filepath)
 
     def get_all_flows(self):
         # 加上运行状态
@@ -297,6 +338,38 @@ class FlowManager:
             data["enabled"] = run_state
             res.append(data)
         return res
+
+    # --- 文件夹管理 ---
+    def get_flow_folders(self):
+        """返回 flows 目录下所有子目录名称列表"""
+        if not os.path.exists(FLOWS_DIR):
+            return []
+        return [d for d in os.listdir(FLOWS_DIR)
+                if os.path.isdir(os.path.join(FLOWS_DIR, d))]
+
+    def create_flow_folder(self, folder_name):
+        """创建一个新的 flow 文件夹"""
+        if not folder_name:
+            return False
+        target = os.path.join(FLOWS_DIR, folder_name)
+        if not os.path.exists(target):
+            os.makedirs(target)
+        return True
+
+    def delete_flow_folder(self, folder_name):
+        """删除文件夹及其中所有 flow"""
+        if not folder_name:
+            return False
+        target = os.path.join(FLOWS_DIR, folder_name)
+        if os.path.exists(target) and os.path.isdir(target):
+            # 停止该文件夹下所有正在运行的 flow
+            for fid, data in list(self.flows.items()):
+                if data.get("folder", "") == folder_name:
+                    self.stop_flow(fid)
+                    del self.flows[fid]
+            import shutil
+            shutil.rmtree(target)
+        return True
 
     def start_flow(self, flow_id):
         if flow_id not in self.flows: return

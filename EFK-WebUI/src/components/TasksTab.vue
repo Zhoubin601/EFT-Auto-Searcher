@@ -16,10 +16,19 @@ const activeStepId = ref(null)
 const autographLibs = ref([])
 const autographLibFiles = ref({})
 
+const folders = ref([])
+const currentFolder = ref(null)
+const currentPage = ref(1)
+const pageSize = 10
+
 const loadFlows = async () => {
   const result = await props.apiCall('get_flows')
   if (result) {
     flows.value = result
+  }
+  const fResult = await props.apiCall('get_flow_folders')
+  if (fResult) {
+    folders.value = fResult
   }
   const libsResult = await props.apiCall('get_autograph_libs')
   if (libsResult) {
@@ -48,6 +57,7 @@ const createNewFlow = () => {
     id: `flow_${Date.now()}`,
     name: '新建自动化任务',
     enabled: false,
+    folder: currentFolder.value || '',
     steps: []
   }
   activeStepId.value = null
@@ -112,6 +122,63 @@ const toggleFlow = async (flow) => {
   }
   loadFlows()
 }
+
+const createFolder = async () => {
+  const name = prompt('请输入文件夹名称：')
+  if (name) {
+    await props.apiCall('create_flow_folder', name)
+    loadFlows()
+  }
+}
+
+const deleteFolder = async (name) => {
+  if (confirm(`确定要删除文件夹 "${name}" 及其中所有任务吗？`)) {
+    await props.apiCall('delete_flow_folder', name)
+    if (currentFolder.value === name) currentFolder.value = null
+    loadFlows()
+  }
+}
+
+const changeFolder = (name) => {
+  currentFolder.value = name
+  currentPage.value = 1
+}
+
+const draggedFlow = ref(null)
+const dragHoverFolder = ref(null)
+
+const onDragStartFlow = (event, flow) => {
+  draggedFlow.value = flow
+}
+const onDragEndFlow = () => {
+  draggedFlow.value = null
+  dragHoverFolder.value = null
+}
+const onDropToFolder = async (targetFolder) => {
+  if (draggedFlow.value) {
+    const f = JSON.parse(JSON.stringify(draggedFlow.value))
+    f.folder = targetFolder
+    await props.apiCall('save_flow', f)
+    loadFlows()
+  }
+  dragHoverFolder.value = null
+}
+
+const paginatedFlows = computed(() => {
+  const targetFolder = currentFolder.value || ""
+  const filtered = flows.value.filter(f => (f.folder || "") === targetFolder)
+  const start = (currentPage.value - 1) * pageSize
+  return filtered.slice(start, start + pageSize)
+})
+
+const totalPages = computed(() => {
+  const targetFolder = currentFolder.value || ""
+  const filtered = flows.value.filter(f => (f.folder || "") === targetFolder)
+  return Math.max(1, Math.ceil(filtered.length / pageSize))
+})
+
+const prevPage = () => { if (currentPage.value > 1) currentPage.value-- }
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
 
 const removeStep = (id) => {
   if (activeStepId.value === id) activeStepId.value = null
@@ -183,12 +250,44 @@ const getStepName = (action) => {
   <div>
     <!-- 列表视图 -->
     <div v-if="!editingFlow">
-      <div class="flex" style="justify-content: flex-end; align-items: center; margin-bottom: 12px;">
-        <button class="button-primary" style="padding: 6px 16px; font-size: 13px;" @click="createNewFlow">+ 新建任务</button>
+      <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <button v-if="currentFolder" class="button-pearl-capsule" style="padding: 6px 16px; font-size: 13px;" @click="changeFolder(null)">
+            ← 返回根目录
+          </button>
+        </div>
+        <div class="flex gap-sm">
+          <button class="button-pearl-capsule" style="padding: 6px 16px; font-size: 13px;" @click="createFolder">+ 新建文件夹</button>
+          <button class="button-primary" style="padding: 6px 16px; font-size: 13px;" @click="createNewFlow">+ 新建任务</button>
+        </div>
       </div>
 
       <div class="grid-1col gap-md">
-        <section v-for="flow in flows" :key="flow.id" class="store-utility-card flex" style="justify-content: space-between; align-items: center;">
+        <!-- 文件夹列表 (仅在根目录显示) -->
+        <template v-if="!currentFolder">
+          <section v-for="folder in folders" :key="folder" class="store-utility-card flex" 
+            :style="{ borderColor: dragHoverFolder === folder ? 'var(--primary)' : 'var(--hairline)', borderWidth: '2px', borderStyle: 'dashed' }"
+            style="justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); cursor: pointer;" 
+            @click="changeFolder(folder)"
+            @dragover.prevent
+            @dragenter.prevent="dragHoverFolder = folder"
+            @dragleave="dragHoverFolder = null"
+            @drop="onDropToFolder(folder)">
+            <div class="flex align-center gap-sm" style="flex:1;">
+              <span style="font-size: 24px;">📁</span>
+              <h3 class="body-strong">{{ folder }}</h3>
+            </div>
+            <div class="flex gap-sm align-center">
+              <button class="button-dark-utility" style="background-color: #ff3b30;" @click.stop="deleteFolder(folder)">删除</button>
+            </div>
+          </section>
+        </template>
+
+        <!-- 任务列表 -->
+        <section v-for="flow in paginatedFlows" :key="flow.id" class="store-utility-card flex" style="justify-content: space-between; align-items: center;"
+          draggable="true" 
+          @dragstart="onDragStartFlow($event, flow)"
+          @dragend="onDragEndFlow">
           <div>
             <h3 class="body-strong">{{ flow.name }}</h3>
             <div class="caption muted mt-xs">{{ flow.steps ? flow.steps.length : 0 }} 个步骤</div>
@@ -202,9 +301,16 @@ const getStepName = (action) => {
           </div>
         </section>
         
-        <div v-if="flows.length === 0" class="text-center caption muted mt-xl">
-          暂无自动化任务，点击上方按钮新建。
+        <div v-if="paginatedFlows.length === 0 && (!folders.length || currentFolder)" class="text-center caption muted mt-xl">
+          当前目录暂无自动化任务，点击上方按钮新建。
         </div>
+      </div>
+
+      <!-- 分页器 -->
+      <div v-if="totalPages > 1" class="flex gap-md justify-center align-center mt-md">
+        <button class="button-pearl-capsule" :disabled="currentPage === 1" @click="prevPage" style="padding: 4px 12px; font-size: 12px; opacity: 1;" :style="{ opacity: currentPage === 1 ? 0.5 : 1 }">上一页</button>
+        <span class="caption">{{ currentPage }} / {{ totalPages }}</span>
+        <button class="button-pearl-capsule" :disabled="currentPage === totalPages" @click="nextPage" style="padding: 4px 12px; font-size: 12px; opacity: 1;" :style="{ opacity: currentPage === totalPages ? 0.5 : 1 }">下一页</button>
       </div>
     </div>
 
@@ -221,6 +327,13 @@ const getStepName = (action) => {
         <div class="form-row">
           <label class="body-strong">任务名称</label>
           <input type="text" v-model="editingFlow.name" class="search-input w-full mt-xs">
+        </div>
+        <div class="form-row mt-sm">
+          <label class="body-strong">所属文件夹</label>
+          <select v-model="editingFlow.folder" class="search-input w-full mt-xs">
+            <option value="">(根目录)</option>
+            <option v-for="f in folders" :key="f" :value="f">{{ f }}</option>
+          </select>
         </div>
       </section>
 

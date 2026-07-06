@@ -1,6 +1,6 @@
 {
-    "id": "flow_1783245199404",
-    "name": "自动购买m856a1",
+    "id": "flow_1783244475504",
+    "name": "自动购买7n40",
     "enabled": false,
     "steps": [
         {
@@ -55,7 +55,7 @@
                 "confidence": 0.8,
                 "click_after_search": "left",
                 "selected_files": [
-                    "Peacekeeper.png"
+                    "Prapor.png"
                 ]
             }
         },
@@ -75,7 +75,7 @@
                 "confidence": 0.9,
                 "click_after_search": "right",
                 "selected_files": [
-                    "m856a1.png"
+                    "7n40.png"
                 ]
             }
         },
@@ -115,7 +115,7 @@
                 "confidence": 0.8,
                 "click_after_search": "none",
                 "selected_files": [
-                    "Peacekeeper名字.png"
+                    "Prapor名字.png"
                 ]
             }
         },
@@ -207,5 +207,6 @@
             "action": "sleep",
             "duration": 3000
         }
-    ]
+    ],
+    "folder": "自动购买"
 }

@@ -416,6 +416,24 @@ class Api:
         except:
             pass
 
+    def get_flow_folders(self):
+        try:
+            return flow_manager.get_flow_folders()
+        except:
+            return []
+
+    def create_flow_folder(self, folder_name):
+        try:
+            return flow_manager.create_flow_folder(folder_name)
+        except:
+            return False
+
+    def delete_flow_folder(self, folder_name):
+        try:
+            return flow_manager.delete_flow_folder(folder_name)
+        except:
+            return False
+
     # --- 自动化图库 (AutoGraph) API ---
     def get_autograph_libs(self):
         try:
@@ -576,6 +594,7 @@ if __name__ == '__main__':
                   api.toggle_ammo_pos_setting, api.save_ammo_count, api.start_ammo_batch, api.stop_ammo_batch,
                   api.add_image, api.auto_add_images, api.remove_images, api.remove_all_images, api.restore_all, api.exit_program,
                   api.get_flows, api.save_flow, api.delete_flow, api.start_flow, api.stop_flow,
+                  api.get_flow_folders, api.create_flow_folder, api.delete_flow_folder,
                   api.get_autograph_libs, api.create_autograph_lib, api.delete_autograph_lib, api.get_autograph_lib_files, api.import_to_autograph_lib)
     
     # 使用 Edge Chromium 渲染，并在窗口准备好后启动后台线程

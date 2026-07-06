@@ -1,6 +1,6 @@
 {
-    "id": "flow_1783245041283",
-    "name": "自动购买M80",
+    "id": "flow_1783245208922",
+    "name": "自动购买cbj",
     "enabled": false,
     "steps": [
         {
@@ -75,7 +75,7 @@
                 "confidence": 0.9,
                 "click_after_search": "right",
                 "selected_files": [
-                    "m80.png"
+                    "cbj.png"
                 ]
             }
         },
@@ -207,5 +207,6 @@
             "action": "sleep",
             "duration": 3000
         }
-    ]
+    ],
+    "folder": "自动购买"
 }

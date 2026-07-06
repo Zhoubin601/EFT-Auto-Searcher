@@ -1,6 +1,6 @@
 {
-    "id": "flow_1783245208922",
-    "name": "自动购买cbj",
+    "id": "flow_1783245215346",
+    "name": "自动购买sigfmj",
     "enabled": false,
     "steps": [
         {
@@ -75,7 +75,7 @@
                 "confidence": 0.9,
                 "click_after_search": "right",
                 "selected_files": [
-                    "cbj.png"
+                    "sigfmj.png"
                 ]
             }
         },
@@ -207,5 +207,6 @@
             "action": "sleep",
             "duration": 3000
         }
-    ]
+    ],
+    "folder": "自动购买"
 }
