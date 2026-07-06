@@ -12,7 +12,12 @@ import json
 import webview
 import shutil
 
-AUTOGRAPH_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "AutoGraph")
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+AUTOGRAPH_DIR = os.path.join(BASE_DIR, "AutoGraph")
 if not os.path.exists(AUTOGRAPH_DIR):
     os.makedirs(AUTOGRAPH_DIR)
 
@@ -23,10 +28,7 @@ except ImportError:
 
 # ================= 解决路径与中文编码问题 =================
 def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_path, relative_path)
+    return os.path.join(BASE_DIR, "Graph", relative_path)
 
 
 def cv2_imread_cn(file_path):
@@ -85,7 +87,7 @@ class Config:
                 "width": 303,
                 "height": 898
             },
-            "icon_files": ['搜索1.png', '叉1.png', '搜索2.png', '搜索3.png'],
+            "icon_files": [],
             "ammo_box_start": None,
             "ammo_col_gap": 0,
             "ammo_row_gap": 0,
@@ -95,7 +97,7 @@ class Config:
             "ammo_click_count": 1,
         }
         self.ICON_FILES = []
-        self.config_file = "config.json"
+        self.config_file = os.path.join(BASE_DIR, "config.json")
 
         # 运行状态
         self.is_running = False
@@ -342,8 +344,7 @@ class Api:
                 cfg.templates_need_update = True
 
     def auto_add_images(self):
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        graph_dir = os.path.join(base_path, "Graph")
+        graph_dir = os.path.join(BASE_DIR, "Graph")
         if os.path.exists(graph_dir) and os.path.isdir(graph_dir):
             added = False
             for filename in os.listdir(graph_dir):
@@ -587,7 +588,13 @@ if __name__ == '__main__':
     
     # 初始化 PyWebView
     api = Api()
-    window = webview.create_window('EFT Auto Searcher', 'http://localhost:5173', width=710, height=600)
+    
+    def get_entrypoint():
+        if getattr(sys, 'frozen', False):
+            return os.path.join(sys._MEIPASS, 'dist', 'index.html')
+        return 'http://localhost:5173'
+        
+    window = webview.create_window('EFT Auto Searcher', get_entrypoint(), width=710, height=600)
     api.window = window
     
     window.expose(api.get_state, api.update_cfg, api.start_record_key, api.start_area, api.reset_area,

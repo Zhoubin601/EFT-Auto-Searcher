@@ -5,12 +5,16 @@ import threading
 import ctypes
 import cv2
 import numpy as np
+import sys
 import mss
 
 # 全局外设锁，防止并发任务冲突
 input_lock = threading.Lock()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FLOWS_DIR = os.path.join(BASE_DIR, "flows")
 
 if not os.path.exists(FLOWS_DIR):
