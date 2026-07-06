@@ -61,7 +61,7 @@
         },
         {
             "action": "sleep",
-            "duration": 3000
+            "duration": 5000
         },
         {
             "action": "loop",

@@ -1,0 +1,100 @@
+{
+    "id": "flow_1783346387794",
+    "name": "自动进入游戏",
+    "enabled": false,
+    "folder": "自动购买",
+    "steps": [
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "EnterGame",
+                "confidence": 0.8,
+                "click_after_search": "none",
+                "selected_files": [
+                    "塔科夫头像.png"
+                ]
+            }
+        },
+        {
+            "action": "image_search",
+            "search_type": "lib",
+            "target": "EnterGame",
+            "confidence": 0.8,
+            "click_after_search": "left",
+            "selected_files": [
+                "塔科夫头像.png"
+            ]
+        },
+        {
+            "action": "mouse_click",
+            "button": "left",
+            "modifier": "none"
+        },
+        {
+            "action": "mouse_click",
+            "button": "left",
+            "modifier": "none"
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "EnterGame",
+                "confidence": 0.8,
+                "click_after_search": "left",
+                "selected_files": [
+                    "头像.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 5000
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "EnterGame",
+                "confidence": 0.8,
+                "click_after_search": "none",
+                "selected_files": [
+                    "探测进入.png"
+                ]
+            }
+        },
+        {
+            "action": "loop",
+            "count": -1,
+            "break_on_success": true,
+            "children": [],
+            "condition_action": {
+                "action": "image_search",
+                "search_type": "lib",
+                "target": "EnterGame",
+                "confidence": 0.8,
+                "click_after_search": "left",
+                "selected_files": [
+                    "开始.png"
+                ]
+            }
+        },
+        {
+            "action": "sleep",
+            "duration": 5000
+        }
+    ]
+}
