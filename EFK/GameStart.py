@@ -79,22 +79,28 @@ class Config:
     def __init__(self):
         self.DEFAULT_CONFIG = {
             "confidence": 0.8,
-            "cooldown": 0.1,
-            "trigger_key": "v",
+            "cooldown": 0.02,
+            "trigger_key": ".",
             "scan_region": {
                 "left": 1362,
                 "top": 56,
                 "width": 303,
                 "height": 898
             },
-            "icon_files": [],
-            "ammo_box_start": None,
-            "ammo_col_gap": 0,
-            "ammo_row_gap": 0,
-            "ammo_target_pos": None,
+            "icon_files": [
+                "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\叉1.png",
+                "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\搜索1.png",
+                "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\搜索2.png",
+                "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\搜索3.png",
+                "d:\\2026Spring Semester File\\GitHub\\EFT-Auto-Searcher\\EFK\\Graph\\搜索4.png"
+            ],
+            "ammo_box_start": [66, 91],
+            "ammo_col_gap": 127,
+            "ammo_row_gap": 129,
+            "ammo_target_pos": [1193, 98],
             "ammo_max_col": 7,
             "ammo_max_row": 7,
-            "ammo_click_count": 1,
+            "ammo_click_count": 5,
         }
         self.ICON_FILES = []
         self.config_file = os.path.join(BASE_DIR, "config.json")
